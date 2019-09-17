@@ -11,8 +11,10 @@ import getpass
 import base64
 import urllib3
 
+MCFE_MGMT = "x.x.x.x"
 
 def cuckoo_monitor():
+
 	print("The watchdog is active now, waiting for any new Malware analysis...")
 	
 	reports_dir = '/home/ismail/.cuckoo/storage/analyses/'
@@ -42,7 +44,7 @@ def cuckoo_monitor():
 
 					if latest_score > 1:
 						print("\nRisk score is high ! i'll call the API script")
-						#os.system("McafeeIPS_API_sendHash.py")
+
 						print("\nAuthenticating with the Mcafee NSM..")
 						session_ID, user_ID = session()  # function for getting session and user ID
 						print("\nMy Session: ", session_ID)
@@ -58,22 +60,21 @@ def cuckoo_monitor():
 						comment = latest_report["target"]["file"]["md5"]
 						print("comment to be added in the Mcafee NSM :", comment)
 						
-						url2 = 'https://172.30.72.16/sdkapi/advancedmalware?type=blacklist'
+						url2 = f'https://{MCFE_MGMT}/sdkapi/advancedmalware?type=blacklist'
 						
-                                                #call the fuction that will send the hash to Mcafee IPS
+                        #call the fuction that will send the hash to Mcafee IPS
 						print("\nblacklisting the hash..\n")
 						send_hash(session_ID, user_ID, md5_hash, fileName, comment, url2)
 						
 						#call the function for Listing the blacklisted hashes
-						url1 = 'https://172.30.72.16/sdkapi/advancedmalware/blacklistedhashes'
+						url1 = f'https://{MCFE_MGMT}/sdkapi/advancedmalware/blacklistedhashes'
 						query_nsm(session_ID, user_ID, url1)
 						cuckoo_monitor()
 						
 					else:
 						print("\nRisk score is low, i'll do nothing for this file and keep watching other files..")
 						cuckoo_monitor()
-						
-            
+
 
 	finally:
 		i.remove_watch(reports_dir)
@@ -94,7 +95,7 @@ def session():
     myauth2 = myauth.decode("utf-8")
     headers = {'NSM-SDK-API': myauth2, 'Accept': 'application/vnd.nsm.v2.0+json', 'Content-Type': 'application/json'}
 
-    session_url = 'https://172.30.72.16/sdkapi/session'
+    session_url = f'https://{MCFE_MGMT}/sdkapi/session'
 
     r = s1.get(session_url, headers=headers, verify=False)
     print("\nMcafee NSM Authentication Status code ", r.status_code)
